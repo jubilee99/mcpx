@@ -330,28 +330,6 @@ func (r *Runtime) registerConsolidatedToolsCatalog(s *mcp.Server) {
 		"step_id": stringSchema("批量操作子步骤 ID"), "timeout_ms": numberSchema("wait 最长等待毫秒数"),
 		"confirmation_token": stringSchema("仅表示用户已确认同一子操作，不是认证凭据"), "cursor": stringSchema("结果分页游标"), "limit": numberSchema("结果字节或列表数量限制"),
 	}, []string{"remote_session_id", "action"}, sessionToolAnnotation)
-	var operationManageSchema map[string]any
-	_ = json.Unmarshal(mcpresult.ToolSchemaJSON(operationManage), &operationManageSchema)
-	operationManageSchema["oneOf"] = []any{
-		map[string]any{
-			"type":        "object",
-			"description": "单操作模式；支持 status、wait、result、cancel、resume。",
-			"properties": map[string]any{
-				"action": enumSchema("单操作动作", "status", "wait", "result", "cancel", "resume"),
-			},
-			"required": []string{"operation_id"},
-		},
-		map[string]any{
-			"type":        "object",
-			"description": "批量查询模式；仅支持 status、result，直接传 operation_ids。",
-			"properties": map[string]any{
-				"action": enumSchema("批量查询动作", "status", "result"),
-			},
-			"required": []string{"operation_ids"},
-		},
-	}
-	operationManageSchema["required"] = []string{"remote_session_id", "action"}
-	operationManage.InputSchema = mustSchemaJSON(operationManageSchema)
 	r.addTool(s, operationManage, r.toolOperationManage)
 
 	r.addTool(s, supportTool("runtime_read", toolDesc["runtime_read"], map[string]any{

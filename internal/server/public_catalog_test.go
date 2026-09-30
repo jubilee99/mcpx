@@ -292,29 +292,13 @@ func TestPublicCatalogIsExactlyTheCleanCoreContract(t *testing.T) {
 			t.Fatalf("operation_manage must make operation_id conditional: %s", mcpresult.ToolSchemaJSON(operationManage))
 		}
 	}
-	branches, ok := operationSchema["oneOf"].([]any)
-	if !ok || len(branches) != 2 {
-		t.Fatalf("operation_manage oneOf=%T %+v", operationSchema["oneOf"], operationSchema["oneOf"])
+	if _, ok := operationSchema["oneOf"]; ok {
+		t.Fatalf("operation_manage must expose a flat schema: %s", mcpresult.ToolSchemaJSON(operationManage))
 	}
-	var sawSingle, sawBatch bool
-	for _, raw := range branches {
-		branch := raw.(map[string]any)
-		required := branch["required"].([]any)
-		properties := branch["properties"].(map[string]any)
-		action := properties["action"].(map[string]any)
-		switch {
-		case containsSchemaRequired(required, "operation_id"):
-			sawSingle = true
-		case containsSchemaRequired(required, "operation_ids"):
-			sawBatch = true
-			enum, _ := action["enum"].([]any)
-			if !reflect.DeepEqual(enum, []any{"status", "result"}) && !reflect.DeepEqual(enum, []any{"result", "status"}) {
-				t.Fatalf("batch actions=%v", enum)
-			}
+	for _, name := range []string{"remote_session_id", "action", "operation_id", "operation_ids", "step_id", "timeout_ms", "confirmation_token", "cursor", "limit"} {
+		if operationProperties[name] == nil {
+			t.Fatalf("operation_manage missing root property %q", name)
 		}
-	}
-	if !sawSingle || !sawBatch {
-		t.Fatalf("operation_manage schema branches missing single=%v batch=%v: %s", sawSingle, sawBatch, mcpresult.ToolSchemaJSON(operationManage))
 	}
 }
 
